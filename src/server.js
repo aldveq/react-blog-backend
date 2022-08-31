@@ -49,9 +49,17 @@ app.post('/api/posts/:name/add-comment', (req, res) => {
 	const postName = req.params.name;
 	const { user, comment } = req.body;
 
-	postsData[postName].comments.push({user, comment});
+	dbHandler(async (db) => {
+		const postData = await db.collection('posts').findOne({ name: postName });
+		await db.collection('posts').updateOne({ name: postName }, {
+			'$set': {
+				comments: postData.comments.concat({ user, comment }),
+			},	
+		});
+		const postDataUpt = await db.collection('posts').findOne({ name: postName });
 
-	res.status(200).send(postsData[postName]);
+		res.status(200).json(postDataUpt);
+	}, res);
 
 });
 
