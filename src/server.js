@@ -6,31 +6,32 @@ const app = express();
 
 app.use(bodyParser.json());
 
-// Get post data by name
-app.get('/api/posts/:name', async (req, res) => {
+const dbHandler = async (businessLogic, res) => {
 	try {
-		const postName = req.params.name;
-
 		const mongoClient = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
 		const db = mongoClient.db('blog-db');
-		const postData = await db.collection('posts').findOne({ name: postName });
 
-		//Sending response back
-		res.status(200).json(postData);
+		await businessLogic(db);
 
 		mongoClient.close();
 	} catch (error) {
-		res.status(500).json({ message: 'Erros connecting to db', error });
+		res.status(500).json({ message: 'Error connecting to db', error });
 	}
+};
+
+// Get post data by name
+app.get('/api/posts/:name', async (req, res) => {
+	dbHandler(async (db) => {
+		const postName = req.params.name;
+		const postData = await db.collection('posts').findOne({ name: postName });
+		res.status(200).json(postData);
+	}, res);
 });
 
 // Upvote endpoint
 app.post('/api/posts/:name/upvote', async (req, res) => {
-	try {
+	dbHandler( async (db) => {
 		const postName = req.params.name;
-
-		const mongoClient = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
-		const db = mongoClient.db('blog-db');
 		const postData = await db.collection('posts').findOne({ name: postName });
 		await db.collection('posts').updateOne({ name: postName }, {
 			'$set': {
@@ -40,12 +41,7 @@ app.post('/api/posts/:name/upvote', async (req, res) => {
 		const postDataUpt = await db.collection('posts').findOne({ name: postName });
 
 		res.status(200).json(postDataUpt);
-
-		mongoClient.close();
-
-	} catch (error) {
-		res.status(500).json({ message: 'Error connecting to db', error });
-	}
+	}, res);
 });
 
 // Add comment endpoint
