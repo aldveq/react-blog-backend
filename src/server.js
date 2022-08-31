@@ -25,11 +25,27 @@ app.get('/api/posts/:name', async (req, res) => {
 });
 
 // Upvote endpoint
-app.post('/api/posts/:name/upvote', (req, res) => {
-	const postName = req.params.name;
-	
-	postsData[postName].upvotes += 1;
-	res.status(200).send(`Post ${postName} now has ${postsData[postName].upvotes} votes!`);
+app.post('/api/posts/:name/upvote', async (req, res) => {
+	try {
+		const postName = req.params.name;
+
+		const mongoClient = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
+		const db = mongoClient.db('blog-db');
+		const postData = await db.collection('posts').findOne({ name: postName });
+		await db.collection('posts').updateOne({ name: postName }, {
+			'$set': {
+				upvotes: postData.upvotes + 1,
+			},
+		});
+		const postDataUpt = await db.collection('posts').findOne({ name: postName });
+
+		res.status(200).json(postDataUpt);
+
+		mongoClient.close();
+
+	} catch (error) {
+		res.status(500).json({ message: 'Error connecting to db', error });
+	}
 });
 
 // Add comment endpoint
