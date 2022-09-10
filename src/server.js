@@ -19,6 +19,31 @@ const dbHandler = async (businessLogic, res) => {
 	}
 };
 
+// Get all post
+app.get('/api/posts', async (req, res) => {
+	dbHandler(async (db) => {
+		const postsData = await db.collection('posts').find();
+		const postsDataArray = [];
+		let postDataObj = {};
+
+		await postsData.forEach(pData => {
+			postDataObj = {
+				'id': pData?._id,
+				'name': pData?.name,
+				'upvotes': pData?.upvotes,
+				'comments': pData?.comments,
+				'title': pData?.title,
+				'content': pData?.content
+			}
+
+			postsDataArray.push(postDataObj);
+		});
+
+		res.status(200).json(postsDataArray);
+
+	}, res);
+});
+
 // Get post data by name
 app.get('/api/posts/:name', async (req, res) => {
 	dbHandler(async (db) => {
