@@ -19,6 +19,33 @@ const dbHandler = async (businessLogic, res) => {
 	}
 };
 
+const getPostName = postStr => {
+	if (postStr.includes(' ')) {
+		return postStr.split(' ').join('-').toLowerCase();
+	} else {
+		return postStr.toLowerCase();
+	}
+}
+
+//Insert new post
+app.post('/api/posts/new', async (req, res) => {
+	const { title, content } = req.body;
+	const postName = getPostName(title);
+	const postDataToStore = {
+		name: postName,
+		upvotes: 0,
+		comments: [],
+		title,
+		content
+	}
+
+	dbHandler(async (db) => {
+		const postIdResult = await db.collection('posts').insertOne(postDataToStore);
+		res.status(200).json(postIdResult);
+	});
+
+});
+
 // Get all post
 app.get('/api/posts', async (req, res) => {
 	dbHandler(async (db) => {
