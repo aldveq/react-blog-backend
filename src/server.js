@@ -73,15 +73,17 @@ app.post('/api/posts/:name/add-comment', async (req, res) => {
 	const postName = req.params.name;
 	const { user, comment } = req.body;
 
-	const postData = await db.collection('posts').findOne({ name: postName });
 	await db.collection('posts').updateOne({ name: postName }, {
-		'$set': {
-			comments: postData.comments.concat({ user, comment }),
-		},	
+		'$push': { comments: { user, comment } },	
 	});
 	const postDataUpt = await db.collection('posts').findOne({ name: postName });
 
-	res.status(200).json(postDataUpt);
+	if(postDataUpt) {
+		res.status(200).json(postDataUpt);
+	} else {
+		res.status(404).send('The post was not found.');
+	}
+
 });
 
 connectToMongoDB(() => {
