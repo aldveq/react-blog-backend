@@ -1,18 +1,15 @@
 import { MongoClient } from 'mongodb';
 
-const dbHandler = async (businessLogic, res) => {
-	try {
-		const mongoClient = await MongoClient.connect('mongodb://localhost:27017');
-		await mongoClient.connect();
+let db;
 
-		const db = mongoClient.db('blog-db');
-
-		await businessLogic(db);
-
-		mongoClient.close();
-	} catch (error) {
-		res.status(500).json({ message: 'Error connecting to db', error });
-	}
+const connectToMongoDB = async (cb) => {
+	const mongoClient = await MongoClient.connect('mongodb://localhost:27017');
+	await mongoClient.connect();
+	db = mongoClient.db('blog-db');
+	await cb();
 };
 
-export default dbHandler;
+export {
+	db,
+	connectToMongoDB
+};
