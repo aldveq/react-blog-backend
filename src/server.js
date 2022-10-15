@@ -48,7 +48,13 @@ app.get('/api/posts', async (req, res) => {
 app.get('/api/posts/:name', async (req, res) => {
 	const postName = req.params.name;
 	const postData = await db.collection('posts').findOne({ name: postName });
-	res.status(200).json(postData);
+	
+	if (postData) {
+		res.status(200).json(postData);
+	} else {
+		res.status(404).send('The post was not found.');
+	}
+	
 });
 
 // Upvote endpoint
