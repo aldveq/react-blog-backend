@@ -1,11 +1,10 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import dbHandler from './db.js';
 import { getPostName } from './tools.js';
 
 const app = express();
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 //Insert new post
 app.post('/api/posts/new', async (req, res) => {
