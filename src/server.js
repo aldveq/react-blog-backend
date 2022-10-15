@@ -1,31 +1,11 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { MongoClient } from 'mongodb';
+import dbHandler from './db.js';
+import { getPostName } from './tools.js';
 
 const app = express();
 
 app.use(bodyParser.json());
-
-const dbHandler = async (businessLogic, res) => {
-	try {
-		const mongoClient = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
-		const db = mongoClient.db('blog-db');
-
-		await businessLogic(db);
-
-		mongoClient.close();
-	} catch (error) {
-		res.status(500).json({ message: 'Error connecting to db', error });
-	}
-};
-
-const getPostName = postStr => {
-	if (postStr.includes(' ')) {
-		return postStr.split(' ').join('-').toLowerCase();
-	} else {
-		return postStr.toLowerCase();
-	}
-}
 
 //Insert new post
 app.post('/api/posts/new', async (req, res) => {
