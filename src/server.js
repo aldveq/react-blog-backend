@@ -52,7 +52,7 @@ app.get('/api/posts/:name', async (req, res) => {
 });
 
 // Upvote endpoint
-app.post('/api/posts/:name/upvote', async (req, res) => {
+app.put('/api/posts/:name/upvote', async (req, res) => {
 	const postName = req.params.name;
 	const postData = await db.collection('posts').findOne({ name: postName });
 	await db.collection('posts').updateOne({ name: postName }, {
