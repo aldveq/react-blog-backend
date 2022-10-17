@@ -3,10 +3,12 @@ import { db, connectToMongoDB } from './db.js';
 import { getPostName } from './tools.js';
 import fs from 'fs';
 import admin from 'firebase-admin';
+import path from 'path';
 
-const credentials = JSON.parse(fs.readFileSync('../credentials.json'));
+const credentialsPath = path.resolve(process.cwd(), './')
+const credentialsFile = JSON.parse(fs.readFileSync( path.join( credentialsPath, 'credentials.json' ), 'utf-8' ));
 admin.initializeApp({
-	credential: admin.credential.cert(credentials),
+	credential: admin.credential.cert(credentialsFile),
 });
 
 const app = express();
