@@ -118,10 +118,11 @@ app.put('/api/posts/:name/upvote', async (req, res) => {
 // Add comment endpoint
 app.post('/api/posts/:name/add-comment', async (req, res) => {
 	const postName = req.params.name;
-	const { user, comment } = req.body;
+	const { comment } = req.body;
+	const { email } = req.user;
 
 	await db.collection('posts').updateOne({ name: postName }, {
-		'$push': { comments: { user, comment } },	
+		'$push': { comments: { user: email, comment } },	
 	});
 	const postDataUpt = await db.collection('posts').findOne({ name: postName });
 
