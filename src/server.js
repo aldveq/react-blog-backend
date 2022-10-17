@@ -1,9 +1,30 @@
 import express from 'express';
 import { db, connectToMongoDB } from './db.js';
 import { getPostName } from './tools.js';
+import fs from 'fs';
+import admin from 'firebase-admin';
+
+const credentials = JSON.parse(fs.readFileSync('../credentials.json'));
+admin.initializeApp({
+	credential: admin.credential.cert(credentials),
+});
 
 const app = express();
 app.use(express.json());
+
+app.use(async (req, res, next) => {
+	const { authtoken } = req.headers;
+
+	if (authtoken) {
+		try {
+			req.user = await admin.auth().verifyIdToken(authtoken);
+		} catch (e) {
+			res.sendStatus(400);
+		}
+	}
+
+	next();
+});
 
 //Insert new post
 app.post('/api/posts/new', async (req, res) => {
@@ -47,9 +68,13 @@ app.get('/api/posts', async (req, res) => {
 // Get post data by name
 app.get('/api/posts/:name', async (req, res) => {
 	const postName = req.params.name;
+	const { uid } = req.user;
+
 	const postData = await db.collection('posts').findOne({ name: postName });
 	
 	if (postData) {
+		const upvoteIds = postData.upvoteIds || [];
+		postData.canUpvote = uid && !upvoteIds.include(uid);
 		res.status(200).json(postData);
 	} else {
 		res.status(404).send('The post was not found.');
