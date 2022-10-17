@@ -93,18 +93,26 @@ app.post('/api/posts/new', async (req, res) => {
 // Upvote endpoint
 app.put('/api/posts/:name/upvote', async (req, res) => {
 	const postName = req.params.name;
+	const { uid } = req.user;
 
-	await db.collection('posts').updateOne({ name: postName }, {
-		'$inc': { upvotes: 1 },
-	});
-	const postDataUpt = await db.collection('posts').findOne({ name: postName });
+	const postData = await db.collection('posts').findOne({name: postName});
 
-	if (postDataUpt) {
+	if (postData) {
+		const upvoteIds = postData.upvoteIds || [];
+		const canUpvote = uid && !upvoteIds.include(uid);
+
+		if (canUpvote) {
+			await db.collection('posts').updateOne({ name: postName }, {
+				$inc: { upvotes: 1 },
+				$push: { upvoteIds: uid },
+			});
+		}
+
+		const postDataUpt = await db.collection('posts').findOne({ name: postName });
 		res.status(200).json(postDataUpt);
 	} else {
 		res.status(404).send('The post was not found.');
 	}
-
 });
 
 // Add comment endpoint
