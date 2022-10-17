@@ -26,23 +26,6 @@ app.use(async (req, res, next) => {
 	next();
 });
 
-//Insert new post
-app.post('/api/posts/new', async (req, res) => {
-	const { title, content } = req.body;
-	const postName = getPostName(title);
-	const postDataToStore = {
-		name: postName,
-		upvotes: 0,
-		comments: [],
-		title,
-		content
-	}
-
-	const postIdResult = await db.collection('posts').insertOne(postDataToStore);
-	res.status(200).json(postIdResult);
-
-});
-
 // Get all post
 app.get('/api/posts', async (req, res) => {
 	const postsData = await db.collection('posts').find();
@@ -80,6 +63,31 @@ app.get('/api/posts/:name', async (req, res) => {
 		res.status(404).send('The post was not found.');
 	}
 	
+});
+
+app.use((req, res, next) => {
+	if (req.user) {
+		next();
+	} else {
+		res.sendStatus(401);
+	}
+});
+
+//Insert new post
+app.post('/api/posts/new', async (req, res) => {
+	const { title, content } = req.body;
+	const postName = getPostName(title);
+	const postDataToStore = {
+		name: postName,
+		upvotes: 0,
+		comments: [],
+		title,
+		content
+	}
+
+	const postIdResult = await db.collection('posts').insertOne(postDataToStore);
+	res.status(200).json(postIdResult);
+
 });
 
 // Upvote endpoint
