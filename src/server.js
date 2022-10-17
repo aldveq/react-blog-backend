@@ -3,10 +3,8 @@ import { db, connectToMongoDB } from './db.js';
 import { getPostName } from './tools.js';
 import fs from 'fs';
 import admin from 'firebase-admin';
-import path from 'path';
 
-const credentialsPath = path.resolve(process.cwd(), './')
-const credentialsFile = JSON.parse(fs.readFileSync( path.join( credentialsPath, 'credentials.json' ), 'utf-8' ));
+const credentialsFile = JSON.parse(fs.readFileSync( './credentials.json' ));
 admin.initializeApp({
 	credential: admin.credential.cert(credentialsFile),
 });
@@ -21,9 +19,11 @@ app.use(async (req, res, next) => {
 		try {
 			req.user = await admin.auth().verifyIdToken(authtoken);
 		} catch (e) {
-			res.sendStatus(400);
+			return res.sendStatus(400);
 		}
 	}
+
+	req.user = req.user || {};
 
 	next();
 });
@@ -59,7 +59,7 @@ app.get('/api/posts/:name', async (req, res) => {
 	
 	if (postData) {
 		const upvoteIds = postData.upvoteIds || [];
-		postData.canUpvote = uid && !upvoteIds.include(uid);
+		postData.canUpvote = uid && !upvoteIds.includes(uid);
 		res.status(200).json(postData);
 	} else {
 		res.status(404).send('The post was not found.');
@@ -101,7 +101,7 @@ app.put('/api/posts/:name/upvote', async (req, res) => {
 
 	if (postData) {
 		const upvoteIds = postData.upvoteIds || [];
-		const canUpvote = uid && !upvoteIds.include(uid);
+		const canUpvote = uid && !upvoteIds.includes(uid);
 
 		if (canUpvote) {
 			await db.collection('posts').updateOne({ name: postName }, {
