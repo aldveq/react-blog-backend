@@ -53,13 +53,10 @@ app.get('/api/posts', async (req, res) => {
 // Get post data by name
 app.get('/api/posts/:name', async (req, res) => {
 	const postName = req.params.name;
-	const { uid } = req.user;
 
 	const postData = await db.collection('posts').findOne({ name: postName });
 	
 	if (postData) {
-		const upvoteIds = postData.upvoteIds || [];
-		postData.canUpvote = uid && !upvoteIds.includes(uid);
 		res.status(200).json(postData);
 	} else {
 		res.status(404).send('The post was not found.');
@@ -84,7 +81,8 @@ app.post('/api/posts/new', async (req, res) => {
 		upvotes: 0,
 		comments: [],
 		title,
-		content
+		content,
+		upvoteUsers: []
 	}
 
 	const postIdResult = await db.collection('posts').insertOne(postDataToStore);
@@ -95,18 +93,18 @@ app.post('/api/posts/new', async (req, res) => {
 // Upvote endpoint
 app.put('/api/posts/:name/upvote', async (req, res) => {
 	const postName = req.params.name;
-	const { uid } = req.user;
+	const { email } = req.body;
 
 	const postData = await db.collection('posts').findOne({name: postName});
 
 	if (postData) {
-		const upvoteIds = postData.upvoteIds || [];
-		const canUpvote = uid && !upvoteIds.includes(uid);
+		const upvoteUsers = postData.upvoteUsers;
+		const canUpvote = email && !upvoteUsers.includes(email);
 
 		if (canUpvote) {
 			await db.collection('posts').updateOne({ name: postName }, {
 				$inc: { upvotes: 1 },
-				$push: { upvoteIds: uid },
+				$push: { upvoteUsers: email },
 			});
 		}
 
